@@ -2,59 +2,103 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>期待値シミュレーター</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>競馬 期待値シミュレーター</title>
+
 <style>
-  body {
-    font-family: sans-serif;
-    padding: 20px;
-    max-width: 500px;
-  }
-  input {
-    margin: 5px 0;
-    width: 100%;
-    padding: 5px;
-  }
-  button {
-    margin-top: 10px;
-    padding: 8px;
-    width: 100%;
-    cursor: pointer;
-  }
-  .result {
-    margin-top: 20px;
-    font-weight: bold;
-    line-height: 1.6em;
-  }
-  .positive { color: green; }
-  .negative { color: red; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  margin: 0;
+  padding: 15px;
+  background: #f5f5f5;
+}
+
+h2 {
+  text-align: center;
+  margin-bottom: 15px;
+}
+
+.card {
+  background: white;
+  padding: 15px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  margin-bottom: 15px;
+}
+
+label {
+  font-size: 14px;
+  font-weight: bold;
+}
+
+input {
+  width: 100%;
+  padding: 10px;
+  margin: 5px 0 12px 0;
+  font-size: 16px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+}
+
+button {
+  width: 100%;
+  padding: 12px;
+  font-size: 16px;
+  border-radius: 10px;
+  border: none;
+  margin-top: 8px;
+}
+
+.calc-btn {
+  background: #1976d2;
+  color: white;
+}
+
+.sim-btn {
+  background: #424242;
+  color: white;
+}
+
+.result {
+  font-size: 15px;
+  line-height: 1.6em;
+}
+
+.positive { color: #2e7d32; font-weight: bold; }
+.negative { color: #c62828; font-weight: bold; }
 </style>
 </head>
+
 <body>
 
-<h2>競馬 期待値シミュレーター</h2>
+<h2>競馬EVシミュレーター</h2>
 
-<label>オッズ（例: 5.0）</label>
-<input type="number" id="odds" step="0.01">
+<div class="card">
+  <label>オッズ</label>
+  <input type="number" id="odds" step="0.01" inputmode="decimal">
 
-<label>自分の予想勝率（%で入力 例: 25）</label>
-<input type="number" id="prob">
+  <label>予想勝率（%）</label>
+  <input type="number" id="prob" inputmode="decimal">
 
-<label>賭け金（円）</label>
-<input type="number" id="bet">
+  <label>賭け金（円）</label>
+  <input type="number" id="bet" inputmode="numeric">
 
-<label>試行回数（例: 1000）</label>
-<input type="number" id="trials" value="1000">
+  <label>試行回数</label>
+  <input type="number" id="trials" value="1000" inputmode="numeric">
 
-<button onclick="calculate()">期待値を計算</button>
-<button onclick="simulate()">長期シミュレーション</button>
+  <button class="calc-btn" onclick="calculate()">期待値計算</button>
+  <button class="sim-btn" onclick="simulate()">長期シミュレーション</button>
+</div>
 
-<div class="result" id="result"></div>
+<div class="card result" id="result">
+  結果がここに表示されます
+</div>
 
 <script>
 function calculate() {
-  const odds = parseFloat(document.getElementById("odds").value);
-  const prob = parseFloat(document.getElementById("prob").value) / 100;
-  const bet = parseFloat(document.getElementById("bet").value);
+  const odds = parseFloat(oddsEl.value);
+  const prob = parseFloat(probEl.value) / 100;
+  const bet = parseFloat(betEl.value);
 
   if (!odds || !prob || !bet) {
     alert("すべて入力してください");
@@ -62,29 +106,26 @@ function calculate() {
   }
 
   const profitIfWin = bet * (odds - 1);
-  const lossIfLose = -bet;
-
-  const expectedValue = (prob * profitIfWin) + ((1 - prob) * lossIfLose);
+  const expectedValue = (prob * profitIfWin) - ((1 - prob) * bet);
   const roi = (expectedValue / bet) * 100;
   const marketProb = 1 / odds;
   const edge = prob - marketProb;
 
-  let evClass = expectedValue >= 0 ? "positive" : "negative";
+  const evClass = expectedValue >= 0 ? "positive" : "negative";
 
-  document.getElementById("result").innerHTML =
+  result.innerHTML =
     "<span class='" + evClass + "'>" +
-    "期待値: " + expectedValue.toFixed(2) + " 円<br>" +
-    "期待回収率: " + roi.toFixed(2) + "%<br>" +
-    "</span>" +
-    "市場暗黙確率: " + (marketProb * 100).toFixed(2) + "%<br>" +
-    "あなたのエッジ: " + (edge * 100).toFixed(2) + "%";
+    "期待値: " + expectedValue.toFixed(0) + " 円<br>" +
+    "期待回収率: " + roi.toFixed(2) + "%</span><br><br>" +
+    "市場確率: " + (marketProb * 100).toFixed(2) + "%<br>" +
+    "エッジ: " + (edge * 100).toFixed(2) + "%";
 }
 
 function simulate() {
-  const odds = parseFloat(document.getElementById("odds").value);
-  const prob = parseFloat(document.getElementById("prob").value) / 100;
-  const bet = parseFloat(document.getElementById("bet").value);
-  const trials = parseInt(document.getElementById("trials").value);
+  const odds = parseFloat(oddsEl.value);
+  const prob = parseFloat(probEl.value) / 100;
+  const bet = parseFloat(betEl.value);
+  const trials = parseInt(trialsEl.value);
 
   if (!odds || !prob || !bet || !trials) {
     alert("すべて入力してください");
@@ -109,17 +150,20 @@ function simulate() {
     if (drawdown > maxDrawdown) maxDrawdown = drawdown;
   }
 
-  const winRate = (wins / trials) * 100;
-
-  document.getElementById("result").innerHTML +=
-    "<br><br>--- シミュレーション結果 ---<br>" +
-    "試行回数: " + trials + " 回<br>" +
-    "実測勝率: " + winRate.toFixed(2) + "%<br>" +
+  result.innerHTML +=
+    "<br><br>--- シミュレーション ---<br>" +
+    "実測勝率: " + ((wins/trials)*100).toFixed(2) + "%<br>" +
     "最終損益: " + bankroll.toFixed(0) + " 円<br>" +
-    "最大ドローダウン: " + maxDrawdown.toFixed(0) + " 円";
+    "最大DD: " + maxDrawdown.toFixed(0) + " 円";
 }
+
+// DOM参照キャッシュ（高速化）
+const oddsEl = document.getElementById("odds");
+const probEl = document.getElementById("prob");
+const betEl = document.getElementById("bet");
+const trialsEl = document.getElementById("trials");
+const result = document.getElementById("result");
 </script>
 
 </body>
 </html>
-
