@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>競馬 期待値シミュレーター</title>
+<style>
+  body {
+    font-family: sans-serif;
+    padding: 20px;
+    max-width: 500px;
+  }
+  input {
+    margin: 5px 0;
+    width: 100%;
+    padding: 5px;
+  }
+  button {
+    margin-top: 10px;
+    padding: 8px;
+    width: 100%;
+    cursor: pointer;
+  }
+  .result {
+    margin-top: 20px;
+    font-weight: bold;
+    line-height: 1.6em;
+  }
+  .positive { color: green; }
+  .negative { color: red; }
+</style>
+</head>
+<body>
+
+<h2>競馬 期待値シミュレーター</h2>
+
+<label>オッズ（例: 5.0）</label>
+<input type="number" id="odds" step="0.01">
+
+<label>自分の予想勝率（%で入力 例: 25）</label>
+<input type="number" id="prob">
+
+<label>賭け金（円）</label>
+<input type="number" id="bet">
+
+<label>試行回数（例: 1000）</label>
+<input type="number" id="trials" value="1000">
+
+<button onclick="calculate()">期待値を計算</button>
+<button onclick="simulate()">長期シミュレーション</button>
+
+<div class="result" id="result"></div>
+
+<script>
+function calculate() {
+  const odds = parseFloat(document.getElementById("odds").value);
+  const prob = parseFloat(document.getElementById("prob").value) / 100;
+  const bet = parseFloat(document.getElementById("bet").value);
+
+  if (!odds || !prob || !bet) {
+    alert("すべて入力してください");
+    return;
+  }
+
+  const profitIfWin = bet * (odds - 1);
+  const lossIfLose = -bet;
+
+  const expectedValue = (prob * profitIfWin) + ((1 - prob) * lossIfLose);
+  const roi = (expectedValue / bet) * 100;
+  const marketProb = 1 / odds;
+  const edge = prob - marketProb;
+
+  let evClass = expectedValue >= 0 ? "positive" : "negative";
+
+  document.getElementById("result").innerHTML =
+    "<span class='" + evClass + "'>" +
+    "期待値: " + expectedValue.toFixed(2) + " 円<br>" +
+    "期待回収率: " + roi.toFixed(2) + "%<br>" +
+    "</span>" +
+    "市場暗黙確率: " + (marketProb * 100).toFixed(2) + "%<br>" +
+    "あなたのエッジ: " + (edge * 100).toFixed(2) + "%";
+}
+
+function simulate() {
+  const odds = parseFloat(document.getElementById("odds").value);
+  const prob = parseFloat(document.getElementById("prob").value) / 100;
+  const bet = parseFloat(document.getElementById("bet").value);
+  const trials = parseInt(document.getElementById("trials").value);
+
+  if (!odds || !prob || !bet || !trials) {
+    alert("すべて入力してください");
+    return;
+  }
+
+  let bankroll = 0;
+  let peak = 0;
+  let maxDrawdown = 0;
+  let wins = 0;
+
+  for (let i = 0; i < trials; i++) {
+    if (Math.random() < prob) {
+      bankroll += bet * (odds - 1);
+      wins++;
+    } else {
+      bankroll -= bet;
+    }
+
+    if (bankroll > peak) peak = bankroll;
+    const drawdown = peak - bankroll;
+    if (drawdown > maxDrawdown) maxDrawdown = drawdown;
+  }
+
+  const winRate = (wins / trials) * 100;
+
+  document.getElementById("result").innerHTML +=
+    "<br><br>--- シミュレーション結果 ---<br>" +
+    "試行回数: " + trials + " 回<br>" +
+    "実測勝率: " + winRate.toFixed(2) + "%<br>" +
+    "最終損益: " + bankroll.toFixed(0) + " 円<br>" +
+    "最大ドローダウン: " + maxDrawdown.toFixed(0) + " 円";
+}
+</script>
+
+</body>
+</html>
